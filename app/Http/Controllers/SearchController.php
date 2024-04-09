@@ -23,10 +23,7 @@ class SearchController extends Controller {
      */
     public function index( \Illuminate\Http\Request $request ) {
         try {
-
             $content = Page::query()->where([['slug', '=', 'search']])->first() ?? false;
-
-
             $data  = $request->all();
             $route = Routes::find( $data['route'] );
 
@@ -77,7 +74,7 @@ class SearchController extends Controller {
             ] );
 
         } catch ( \Throwable $t ) {
-            return view( 'pages/search', [ 'currentRoute' => [], 'debug' => $t->getMessage() ] );
+            return redirect($request->lang . '/request')->with('route', $request->all());  //view( 'pages/search', [ 'currentRoute' => [], 'debug' => $t->getMessage() ] )
         }
     }
 

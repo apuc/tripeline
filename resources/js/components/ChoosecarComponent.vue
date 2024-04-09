@@ -5,7 +5,7 @@
                 <i>
                     <img :src="'/' + selected.image" alt="sedan">
                 </i>
-                <span>{{ selected.brand }} - {{ selected.title }}</span>
+                <span>{{ selected.title }} - {{ selected.brand }}</span>
                 <svg class="icon arrow-down">
                     <use xlink:href="/img/sprites/sprite.svg#arrow-down"></use>
                 </svg>
@@ -18,7 +18,7 @@
                     <i>
                         <img :src="'/' + item.image" :alt="item.title">
                     </i>
-                    <span>{{ item.brand }} - {{ item.title }}</span>
+                    <span>{{ item.title }} - {{ item.brand }}</span>
                 </div>
             </li>
         </ul>

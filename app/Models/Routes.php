@@ -6,15 +6,35 @@ use App\Models\Cities;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Country;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use SleepingOwl\Admin\Form\Element\Image;
 
 class Routes extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+
+    protected $dates = ['deleted_at'];
+
+    //protected $appends = ['invert'];
 
     public function cars()
     {
-        return $this->belongsToMany(Car::class);
+        //return $this->belongsToMany(Car::class);
+        //return $this->hasManyThrough(Car::class, RouteCar::class, 'route_id', 'id', 'id', 'car_id');
+        return $this->belongsToMany(Car::class, RouteCar::class, 'route_id', 'car_id', 'id', 'id')
+        ->select([
+            'cars.id',
+            'title',
+            'places_min',
+            'places_max',
+            'vehicle_body_type',
+            'brand',
+            'image',
+            'luggage',
+            'route_cars.price',
+            'priority',
+        ]);
     }
 
     public function points()
@@ -50,7 +70,7 @@ class Routes extends Model
 
     public function getFromCountry(): \Illuminate\Database\Eloquent\Collection {
         return
-            $this->hasOne(Country::class,'id','route_from_country_id' )->select(['name'])->get();
+            $this->hasOne(Country::class,'id','route_from_country_id' )->select(['name', 'visible_routes'])->get();
     }
 
     public function getToCity(): \Illuminate\Database\Eloquent\Collection {
@@ -67,6 +87,16 @@ class Routes extends Model
     public function getToCountry(): \Illuminate\Database\Eloquent\Collection {
         return
             $this->hasOne(Country::class,'id','route_to_country_id' )->select(['name'])->get();
+    }
+
+//    public function getInvertAttribute(): int
+//    {
+//        return 0;
+//    }
+
+    public function setInvertAttribute($value): void
+    {
+        $this->attributes['invert'] = (int)$value;
     }
 
 }

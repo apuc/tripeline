@@ -94,7 +94,7 @@
                                         @endforeach
                                     </div>
                                     <div class="tickets__footer">
-                                        @foreach ($order->cars as $car)
+                                        @foreach ($order->getCars() as $car)
                                             <i><img src="/{{$car->image}}" alt="sedan"></i>
                                             <div class="tickets__footer-info">
                                                 <h4>{{$car->title}}</h4><em>{{$car->brand}}</em>

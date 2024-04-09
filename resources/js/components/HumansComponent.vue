@@ -4,14 +4,14 @@
         <input type="number" name="childrens" :value="(childrens == 0 ? 0 : childrens)">
         <input type="number" required name="luggage" :value="luggage">
         <div class="select-humans__head" @click="opened = !opened">
-            <div :class="{error: errorHumans}">
+            <div :class="{error: errorHumans}" class="human-block">
                 <em>{{$t("passengers")}}:</em>
                 <span>{{ parseInt(adults) + parseInt(childrens) }}</span>
                 <svg class="icon users">
                     <use xlink:href="/img/sprites/sprite.svg#users"></use>
                 </svg>
             </div>
-            <div><em>{{$t("luggage")}}: </em><span>{{ luggage }}</span>
+            <div class="human-block"><em>{{$t("luggage")}}: </em><span>{{ luggage }}x</span>
                 <svg class="icon suitecase">
                     <use xlink:href="/img/sprites/sprite.svg#suitecase"></use>
                 </svg>

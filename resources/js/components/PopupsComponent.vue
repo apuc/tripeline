@@ -3,7 +3,7 @@
         <modal v-show="showLoginModal" @close="closeModal()">
             <div class="popup --sm-- popup-login" id="login" v-show="form === '#login'">
                 <div class="popup__wrap">
-                    <h3 class="--center">{{ $t('Login in') }}</h3>
+                    <h3 class="--center">{{ $t('Login') }}</h3>
                     <form data-entity="login" @submit.prevent="loginRequest" method="POST" class="js-form-validator_popup">
                         <input type="hidden" name="_token" :value="csrf">
                         <div class="input-block">
@@ -139,7 +139,9 @@ export default Vue.component("v-popups", {
         const $this = this
 
         document.addEventListener("bouncerFormValid", function (el) {
-                if (el.target.dataset?.entity === 'login') {
+            console.log('bouncerFormValid');
+            console.log(el.target.dataset);
+            if (el.target.dataset?.entity === 'login') {
                     try {
                         var form = el.target;
                         $this.loginRequest(form)

@@ -34,12 +34,12 @@ class Users extends Section implements Initializable {
     /**
      * @var string
      */
-    protected $title;
+    protected $title = "Users";
 
     /**
      * @var string
      */
-    protected $alias;
+    protected $alias = "users";
 
     /**
      * Initialize class.
@@ -85,15 +85,17 @@ class Users extends Section implements Initializable {
                                ->setColumns( $columns )
                                ->setHtmlAttribute( 'class', 'table-primary table-hover th-center' );
 
+        $display->setApply(function ($query)
+        {
+            $query->where('role_id', '<', 3);
+            $query->orderBy('created_at', 'desc');
+        });
+
+        //dd(\App\Models\User::all());
+
         $display->setColumnFilters( [
-            AdminColumnFilter::select()
-                             ->setModelForOptions( \App\Models\User::class, 'email' )
-                             ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
-                                 return $query;
-                             } )
-                             ->setDisplay( 'email' )
-                             ->setColumnName( 'email' )
-                             ->setPlaceholder( 'All email' )
+            AdminColumnFilter::select(\App\Models\User::class, 'email')->setDisplay('email')
+                ->setPlaceholder('All email')
             ,
         ] );
         $display->getColumnFilters()->setPlacement( 'card.heading' );

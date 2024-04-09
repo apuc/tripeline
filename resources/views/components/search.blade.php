@@ -1,5 +1,5 @@
 <v-custom-search
-    :routes = "{{json_encode($routeList)}}"
+{{--    :routes = "{{json_encode($routeList)}}"--}}
     :current = "{{($currentRoute)}}"
     :current_route_places = "{{json_encode($currentRoutePlaces)}}"
     :debug = "{{json_encode($debug)}}"

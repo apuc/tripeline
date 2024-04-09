@@ -10,5 +10,8 @@
     </div>
     <v-order-route :payment_methods="{{@\GuzzleHttp\json_encode($payments_methods)}}"
                    csrf="{{csrf_token()}}"
+                   @if(Auth::check())
+                       :user="{{Auth::user()}}"
+                   @endif
     ></v-order-route>
 @endsection

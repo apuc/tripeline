@@ -19,6 +19,7 @@ use SleepingOwl\Admin\Form\Buttons\Save;
 use SleepingOwl\Admin\Form\Buttons\SaveAndClose;
 use SleepingOwl\Admin\Form\Buttons\SaveAndCreate;
 use SleepingOwl\Admin\Section;
+use App\Helper\NotificationHelper;
 
 /**
  * Class Country
@@ -91,6 +92,8 @@ class RouteOrder extends Section implements Initializable {
             ,
         ];
 
+    //    dd(\App\Models\RouteOrder::find(19));
+
         $display = AdminDisplay::datatables()
                                ->setName( 'firstdatatables' )
                                ->setOrder( [ [ 0, 'asc' ] ] )
@@ -101,12 +104,12 @@ class RouteOrder extends Section implements Initializable {
 
         $display->setColumnFilters( [
             AdminColumnFilter::select()
-                             ->setModelForOptions( \App\Models\Country::class, 'name' )
+                             ->setModelForOptions( \App\Models\Routes::class, 'title' )
                              ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
                                  return $query;
                              } )
-                             ->setDisplay( 'name' )
-                             ->setColumnName( 'name' )
+                             ->setDisplay( 'title' )
+                             ->setColumnName( 'route_id' )
                              ->setPlaceholder( 'All names' )
             ,
             AdminColumnFilter::select()
@@ -125,6 +128,12 @@ class RouteOrder extends Section implements Initializable {
         ] );
         $display->getColumnFilters()->setPlacement( 'card.heading' );
 
+
+        $display->setApply(function ($query)
+        {
+            $query->where('deleted_at', '=', null);
+        });
+
         return $display;
     }
 
@@ -135,6 +144,7 @@ class RouteOrder extends Section implements Initializable {
      * @return FormInterface
      */
     public function onEdit( $id = null, $payload = [] ) {
+        //dump($id);
         $form = AdminForm::card()->addBody( [
             AdminFormElement::columns()->addColumn( [
                 AdminFormElement::hidden( 'user_id' )->setDefaultValue( Auth::id() ),
@@ -161,10 +171,12 @@ class RouteOrder extends Section implements Initializable {
                 AdminFormElement::text( 'last_name', 'Last name' )->setReadonly( true ),
                 AdminFormElement::text( 'email', 'Email' )->setReadonly( true ),
                 AdminFormElement::text( 'phone', 'Phone' )->setReadonly( true ),
+                AdminFormElement::text( 'id', 'Booking number' )->setReadonly( true ),
+                AdminFormElement::text( 'driver.first_name', 'Driver' )->setReadonly( true ),
+                AdminFormElement::text( 'vehicle.licence', 'Vehicle' )->setReadonly( true ),
             ], 'col-xs-12 col-sm-6 col-md-4 col-lg-4' )->addColumn( [
                 AdminFormElement::custom()
                                 ->setDisplay( function ( $instance ) {
-
                                     $places     = $instance->places();
                                     $placesList = '';
                                     foreach ( $places->get() as $place ) {
@@ -182,8 +194,6 @@ class RouteOrder extends Section implements Initializable {
                                 } ),
                 AdminFormElement::custom()
                                 ->setDisplay( function ( $instance ) {
-
-
                                     $cars      = $instance->getCars();
                                     $carsLists = '';
                                     $carsList  = $cars->get();
@@ -238,13 +248,40 @@ class RouteOrder extends Section implements Initializable {
                                 } )
                                 ->setCallback( function ( $instance ) {
                                 } ),
-                AdminFormElement::radio( 'status', 'Status' )
-                                ->setOptions( [
-                                    'pending'  => 'Pending',
-                                    'complete' => 'Complete',
-                                    'fail'     => 'Fail'
-                                ] )
-                                ->required()
+//                AdminFormElement::radio( 'status', 'Status' )
+//                                ->setOptions( [
+//                                    'pending'  => 'Pending',
+//                                    'complete' => 'Complete',
+//                                    'fail'     => 'Fail'
+//                                ] )
+//                                ->required(),
+                AdminFormElement::custom()
+                    ->setDisplay( function ( $instance ) {
+                        //$payment_type = $instance->payment_type === 1 ? 'Cart' : 'Cash';
+                        $statuses = ['complete', 'fail', 'pending', 'planned'];
+                        $html = "<div class='form-group form-element-radio'><label for='status' class='control-label required'>Status
+                            <span class='form-element-required'>*</span></label>";
+
+                        foreach ($statuses as $status) {
+                            $checked = $instance->status == $status ? "checked='checked'" : '';
+                            $html .= "<div class='radio'><label><input type='radio' " . $checked . " name='status' value='" . $status . "'>" . $status . "</label></div>";
+                        }
+
+                        $html .= "</div>";
+
+                        return $html;
+                    } )
+                    ->setCallback( function ($instance, $model) {
+                        if ($instance->driver) {
+                            if ($model->status === 'planned' && $instance->status !== 'planned' && $instance->driver->user->device) {
+                                NotificationHelper::send($instance->driver->user->device->token, 'Mytripline Driver', "You've been assigned a ride. Click here for details.");
+                            }
+                        }
+
+                        $instance->update([
+                            'status' => $model->status
+                        ]);
+                    } )
             ], 'col-xs-12 col-sm-6 col-md-4 col-lg-4' )
         ] );
         $form->getButtons()->setButtons( [
@@ -268,7 +305,8 @@ class RouteOrder extends Section implements Initializable {
      * @return bool
      */
     public function isDeletable( Model $model ) {
-        return false;
+        return Auth::user()->isAdmin();
+
     }
 
 

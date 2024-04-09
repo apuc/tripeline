@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarRoute;
-use App\Models\CarsRouteOrders;
 use App\Models\PlacesRouteOrders;
+use App\Models\UserDevice;
+use App\Models\RouteOrderCar;
 use Illuminate\Http\Request;
 use TheSeer\Tokenizer\Exception;
+use App\Helper\NotificationHelper;
 
 class RouteOrder extends Controller {
     //
@@ -21,14 +22,9 @@ class RouteOrder extends Controller {
     public function save( \Illuminate\Http\Request $request ) {
 
         try {
-
-
             $data = $request->all();
-
-
             $data['user_id'] = \Auth::user()->id ?? 1;
-
-
+            $userDevices = UserDevice::all();
             $routeOrder = new \App\Models\RouteOrder();
 
 
@@ -53,12 +49,10 @@ class RouteOrder extends Controller {
             $routeOrder->save();
 
             foreach ( $data['cars'] as $c ) {
-                $car = new CarsRouteOrders();
+                $car = new RouteOrderCar();
 
-                $car->cars_route_order_id = $routeOrder->id;
-                $car->car_id              = $c['id'];
-                $car->count               = $c['count'];
-                $car->price               = $c['price'];
+                $car->route_id = $routeOrder->id;
+                $car->car_id = $c['id'];
 
                 $car->save();
             }
@@ -87,7 +81,7 @@ class RouteOrder extends Controller {
                     'description' => 'Example charge',
                     'source'      => $token,
                     'metadata'    => [ 'order_id' => $routeOrder->id ]
-                ] );
+                ]);
 
 
                 if ( $charge['status'] && $charge['status'] === 'succeeded' ) {
@@ -98,29 +92,20 @@ class RouteOrder extends Controller {
                     $routeOrder->save();
                 }
 
+                foreach ($userDevices as $userDevice) {
+                    NotificationHelper::send($userDevice->token, 'Mytripline Driver', 'New trip!');
+                }
                 return [ 'status' => 'success', 'path' => 'order-success' ];
+            }
 
-//                \Stripe\Stripe::setApiKey(env( 'STRIPE_SECRET_API' ));
-//
-//
-//                $paymentIntent = \Stripe\PaymentIntent::create([
-//                    'amount' => (int) $routeOrder->amount * 100,
-//                    'currency' => 'eur',
-//                    'automatic_payment_methods' => [
-//                        'enabled' => true,
-//                    ],
-//                ]);
-
-
+            foreach ($userDevices as $userDevice) {
+                NotificationHelper::send($userDevice->token, 'Mytripline Driver', 'New trip!');
             }
 
             return [ 'status' => 'success', 'path' => 'order-success-manual' ];
-
-
         } catch ( \Throwable $e ) {
             return [ 'status' => 'success', 'path' => 'error', 'message' => $e->getMessage() ];
         }
-//        return $data;
     }
 
     public function get_payment_token( \Illuminate\Http\Request $request ) {
@@ -168,5 +153,10 @@ class RouteOrder extends Controller {
             http_response_code( 500 );
             echo json_encode( [ 'error' => 'Invalid PaymentIntent status' ] );
         }
+    }
+
+    public function testNotification()
+    {
+        return NotificationHelper::send('eAR3kQt1ln0:APA91bFFtVEuIcwNzTQ-XqvCKNGAbooSlyd2Kto91kTiytO6qsWRIFtaE2gxJ8iCGgn8CrHil8wvbOOiBPnrc0448A61vxNLxEiyOKGChG5RQy-7gnKSu_EzVHIfz4mLTTvRsz_GWhuT', 'Mytripline Driver', 'New trip!');
     }
 }

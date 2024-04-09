@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Car;
+use App\Models\Cities;
+use App\Models\CityRoute;
 use App\Models\Place;
 use App\Models\Routes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
+use Illuminate\Database\Eloquent\Builder;
 
 // the image will be replaced with an optimized version which should be smaller
 
@@ -24,7 +28,6 @@ class RoutesController extends Controller {
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|void
      */
     public function index( \Illuminate\Http\Request $request ) {
-
         try {
             $routes = Routes::select( [ 'countries.name', 'countries.id' ] )->where( 'status', '=', 'open' )
                             ->join( 'countries', 'countries.id', '=', 'routes.route_to_country_id' )
@@ -102,7 +105,7 @@ class RoutesController extends Controller {
                     'route_to_country_id',
                     'route_start',
                     'route_end',
-                    'price'
+                    'price',
                 ]
             )->where( 'status', '=', 'open' )
                             ->get();
@@ -113,6 +116,10 @@ class RoutesController extends Controller {
                 $from_country = $route->getFromCountry();
                 $to_city      = $route->getToCity();
                 $to_country   = $route->getToCountry();
+
+                if ($from_country[0]->name == $to_country[0]->name && !$from_country[0]->visible_routes) {
+                    continue;
+                }
 
                 $points = [];
                 foreach ( $route->pointsName() as $point ) {
@@ -134,6 +141,8 @@ class RoutesController extends Controller {
                         'points'                => $points,
                         'route_start'           => $route->route_start,
                         'route_end'             => $route->route_end,
+                        'visible_routes'        => $from_country[0]->visible_routes,
+//                        'visible_routes_check'  => $from_country[0]->name == $to_country[0]->name && !$route->visible_routes
                     ];
             }
 
@@ -194,14 +203,8 @@ class RoutesController extends Controller {
         }
     }
 
-    /**
-     * Prepare cars list for request page.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|void
-     */
-    public function getCarsList() {
+
+    public function getCarsList(\Illuminate\Http\Request $request) {
         try {
             $cars = Car::select()->get();
 
@@ -210,6 +213,205 @@ class RoutesController extends Controller {
         } catch ( \Throwable $t ) {
             return view( 'pages/request', [ 'cars' => [] ] );
         }
+    }
+
+
+    public function getCities(\Illuminate\Http\Request $request)
+    {
+        $cities = Cities::where('name', 'LIKE', $request->cityPart.'%')->with('country:id,name')->get();
+
+//        if ($direction = $request->direction) {
+//            $cities = $cities->filter(function ($city) use($direction) {
+//                if (!$route = Routes::where('route_'. $direction . '_city_id', $city->id)->first()) {
+//                    return false;
+//                }
+//
+//                $method = 'get' . ucfirst($direction) . 'Country';
+//                $city->country = $route->$method()->toArray()[0]['name'];
+//
+//                return true;
+//            });
+//        }
+        
+//        $cities = $cities->filter(function ($city) {
+//            $route = Routes::where('route_'. $direction . '_city_id', $city->id)->first();
+//
+//            $method = 'get' . ucfirst($direction) . 'Country';
+//            $city->country = $route->$method()->toArray()[0]['name'];
+//
+//            return true;
+//        });
+        
+
+        return $cities;
+    }
+
+
+    public function getByPlace(\Illuminate\Http\Request $request)
+    {
+        $result = [];
+
+        //return Routes::whereIn('route_from_city_id', [136115, 148565])->whereIn('route_to_city_id', [22970])->get();
+
+        $routes = new Routes;
+        $routes2 = new Routes;
+
+        if (count($request->from) && !count($request->to)) {
+            $routes = $routes->where('status', '!=', 'closed')->whereIn('route_from_city_id', $request->from);
+            $routes = $routes->get();
+            $routes2 = $routes2->where('status', '!=', 'closed')->whereIn('route_to_city_id', $request->from);
+            $routes2 = $routes2->get();
+
+            foreach ($routes2 as $route2) {
+                $route2->setInvertAttribute(1);
+            }
+
+            $routes = $routes->merge($routes2);
+        }
+
+        if (count($request->to) && !count($request->from)) {
+            $routes = $routes->where('status', '!=', 'closed')->whereIn('route_to_city_id', $request->to);
+            $routes = $routes->get();
+            $routes2 = $routes2->where('status', '!=', 'closed')->whereIn('route_from_city_id', $request->to);
+            $routes2 = $routes2->get();
+
+            foreach ($routes2 as $route2) {
+                $route2->setInvertAttribute(1);
+            }
+
+            $routes = $routes->merge($routes2);
+        }
+
+        if (count($request->to) && count($request->from)) {
+            $routes = $routes->where('status', '!=', 'closed')->whereIn('route_from_city_id', $request->from)->whereIn('route_to_city_id', $request->to)->get();
+
+            $routesInvert = $routes2->where('status', '!=', 'closed')->whereIn('route_from_city_id', $request->to)->whereIn('route_to_city_id', $request->from)->get();
+
+            foreach ($routesInvert as $routeInvert) {
+                $routeInvert->setInvertAttribute(1);
+            }
+
+            $routes = $routes->merge($routesInvert);
+            
+            
+
+//            if (count($request->to) == 1 && count($request->from) > 1) {
+//                $routes = $routes->where('route_to_city_id', $request->to)->whereIn('route_from_city_id', $request->from)->get();
+//            } elseif(count($request->from) == 1 && count($request->to) > 1) {
+//                $routes = $routes->where('route_from_city_id', $request->from)->whereIn('route_to_city_id', $request->to)->get();
+//            } else {
+//                $routes = $routes->where([['route_from_city_id', $request->from], ['route_to_city_id', $request->to]])->get();
+//            }
+        }
+
+        foreach ( $routes as $route ) {
+            $from_city    = $route->getFromCity();
+            $from_country = $route->getFromCountry();
+            $to_city      = $route->getToCity();
+            $to_country   = $route->getToCountry();
+
+            if ($from_country[0]->name == $to_country[0]->name && !$from_country[0]->visible_routes) {
+                continue;
+            }
+
+            $points = [];
+            foreach ( $route->pointsName() as $point ) {
+                $points[] = $point->name;
+            }
+
+            $result[] =
+                [
+                    'id'                    => $route->id,
+                    'title'                 => $route->title,
+                    'from_city'             => $from_city[0]->name ?? '',
+                    'route_from_city_id'    => $route->route_from_city_id,
+                    'route_from_country_id' => $route->route_from_country_id,
+                    'route_to_city_id'      => $route->route_to_city_id,
+                    'route_to_country_id'   => $route->route_to_country_id,
+                    'from_country'          => $from_country[0]->name ?? '',
+                    'to_city'               => $to_city[0]->name ?? '',
+                    'to_country'            => $to_country[0]->name ?? '',
+                    'points'                => $points,
+                    'route_start'           => $route->route_start,
+                    'route_end'             => $route->route_end,
+                    'visible_routes'        => $from_country[0]->visible_routes,
+                    'invert'                => $route->invert,
+                ];
+        }
+
+        return $result;
+
+        //$routes = $routes->whereIn('route_from_city_id', [136115, 148565])->whereIn('route_to_city_id', [22970]);
+
+        //$routes = $routes->whereIn('route_to_city_id', [22970]);
+
+        //return $routes->get();
+//        return Routes::all()->pluck('id');
+
+//        $fromCitiesIDS = Cities::where('name', 'LIKE', $request->fromCity.'%')->get('id');
+//        $toCitiesIDS = Cities::where('name', 'LIKE', $request->toCity.'%')->pluck('id'); //[148684]
+//
+//        //$fromRoutes = Routes::whereIn('route_from_city_id', $fromCitiesIDS)->get();
+//        $fromRoutes = Routes::select('route_from_city_id','route_to_city_id', 'route_from_country_id', 'route_to_country_id')->whereIn('route_from_city_id', $fromCitiesIDS)->get();
+//
+//        //return $toCitiesIDS;
+//
+//
+//        $routes = [];
+//
+//        foreach ($fromRoutes as $fromRoute) {
+//            if (in_array($fromRoute->route_to_city_id, $toCitiesIDS->toArray())) {
+//                $routes[] = $fromRoute;
+//            }
+//        }
+
+        //$routeIDS = Routes::all()->pluck('id');
+
+        if (count($request->to)) {
+            if (count($request->to) < 2) {
+                $routes = Routes::where('route_to_city_id', $request->to[1]);
+            } else {
+                $routes = Routes::whereIn('route_to_city_id', $request->to);
+            }
+        }
+
+        $routes = Routes::where([['route_to_city_id', $request->toCityId]])->get(['route_from_city_id','route_to_city_id', 'route_from_country_id', 'route_to_country_id']);
+
+        foreach ( $routes as $route ) {
+            $from_city    = $route->getFromCity();
+            $from_country = $route->getFromCountry();
+            $to_city      = $route->getToCity();
+            $to_country   = $route->getToCountry();
+
+            if ($from_country[0]->name == $to_country[0]->name && !$from_country[0]->visible_routes) {
+                continue;
+            }
+
+            $points = [];
+            foreach ( $route->pointsName() as $point ) {
+                $points[] = $point->name;
+            }
+
+            $result[] =
+                [
+                    'id'                    => $route->id,
+                    'title'                 => $route->title,
+                    'from_city'             => $from_city[0]->name ?? '',
+                    'route_from_city_id'    => $route->route_from_city_id,
+                    'route_from_country_id' => $route->route_from_country_id,
+                    'route_to_city_id'      => $route->route_to_city_id,
+                    'route_to_country_id'   => $route->route_to_country_id,
+                    'from_country'          => $from_country[0]->name ?? '',
+                    'to_city'               => $to_city[0]->name ?? '',
+                    'to_country'            => $to_country[0]->name ?? '',
+                    'points'                => $points,
+                    'route_start'           => $route->route_start,
+                    'route_end'             => $route->route_end,
+                    'visible_routes'        => $from_country[0]->visible_routes,
+                ];
+        }
+
+        return $result;
     }
 
 
@@ -352,7 +554,7 @@ class RoutesController extends Controller {
                     ];
             }
 
-            return [ 'routes' => json_encode( $result ), ];
+            return [ 'routes' => ( $result ) ];
 
         } catch ( \Throwable $t ) {
             return [ 'error' => $t->getMessage() ];
@@ -373,6 +575,18 @@ class RoutesController extends Controller {
             return $image;
         }
         return $resized_image;
+    }
+
+    public function checkRedis(\Illuminate\Http\Request $request)
+    {
+        return Routes::all();
+        //return Cache::put('routes', Routes::all(), 180);
+        //return Cache::get('routes');
+
+//        return Cache::get('routes', function () use ($request) {
+//            return $this->getByPlace($request);
+//        });
+        //return Cache::put('names2', 'Ilya', 30);
     }
 
 }

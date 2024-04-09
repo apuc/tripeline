@@ -1,0 +1,113 @@
+.partner {
+  padding-top: 75px;
+  padding-bottom: 75px;
+  overflow: hidden;
+  border-bottom: 1px solid $silver-700;
+
+  @media(max-width: 767px) {
+    //padding-top: 44px;
+    //padding-bottom: 47px;
+    padding-top: 37px;
+    padding-bottom: 28px;
+  }
+
+  @media(max-width: 520px) {
+    padding-top: 47px;
+  }
+
+  &partner_container {
+    display: block;
+    width: 721px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 169px;
+
+    background: url("../img/parteners-bg.png") bottom center;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    @media(max-width: 740px) {
+      width: 100%;
+    }
+
+    @media(max-width: 767px) {
+      padding-bottom: 101px;
+    }
+
+    @media(min-width: 521px) {
+      display: none;
+    }
+
+    h4 {
+      margin-bottom: 32px;
+      padding: 0 10px;
+
+      @media(max-width: 767px) {
+        margin-bottom: 19px;
+      }
+    }
+
+    p {
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 27px;
+      padding-left: 30px;
+      padding-right: 30px;
+      margin-top: 0;
+      margin-bottom: 61px;
+
+      @media(max-width: 767px) {
+        font-weight: 300;
+        font-size: 13px;
+        line-height: 21px;
+        padding-left: 0;
+        padding-right: 0;
+        margin-bottom: 33px;
+      }
+    }
+  }
+
+  &__slider {
+    //width: calc(100% + ((100vw - 1240px) / 2));
+    width: 100%;
+
+    @media(max-width: 1240px) {
+      //width: calc(100% + 20px);
+    }
+
+    h2 {
+      //margin-bottom: 53px;
+      margin-bottom: 1px;
+
+      @media(max-width: 767px) {
+        margin-bottom: 19px;
+      }
+    }
+  }
+
+  &-slider {
+    .swiper-slide {
+      width: 274px;
+      //height: 199px;
+      height: 118px;
+      background: $silver-300;
+      border-radius: 25px;
+      //margin-right: 43px;
+      overflow: hidden;
+
+      @media(max-width: 570px) {
+        width: 178px;
+        height: 129px;
+      }
+
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+    }
+  }
+}

@@ -25,7 +25,7 @@ class AdminAuthenticate
             }
         }
 
-        if ($auth->user()->isCustomer() && !$auth->user()->isAdmin()) {
+        if (($auth->user()->isCustomer() || $auth->user()->isPartner()) && !$auth->user()->isAdmin()) {
             return response('Access denied.', 401);
         }
 

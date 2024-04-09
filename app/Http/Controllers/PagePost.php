@@ -52,7 +52,7 @@ class PagePost extends Controller {
             $team_response[] = [
                 'title'    => $this->getTranslateContent( $team, 'title' ),
                 'position' => $this->getTranslateContent( $team, 'position' ),
-                'body'              => strip_tags($this->getTranslateContent( $content, 'body' )),
+                'body'              => strip_tags($this->getTranslateContent( $team, 'body' )),
                 'image'    => $this->getImageBySize('130x130', $team['image'])
             ];
         }
@@ -77,6 +77,7 @@ class PagePost extends Controller {
             'content' => []
         ] );
     }
+
 
     public function getTranslateContent( $content, $key ) {
         return ( isset( $content[ $key . '_' . app()->getLocale() ] ) && strlen( $content[ $key . '_' . app()->getLocale() ] ) > 0 ) ? $content[ $key . '_' . app()->getLocale() ] : $content[ $key . '_en' ];

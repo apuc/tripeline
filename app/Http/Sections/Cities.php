@@ -89,14 +89,9 @@ class Cities extends Section implements Initializable {
                                ->setHtmlAttribute( 'class', 'table-primary table-hover th-center' );
 
         $display->setColumnFilters( [
-            AdminColumnFilter::select()
-                             ->setModelForOptions( \App\Models\Country::class, 'name' )
-                             ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
-                                 return $query;
-                             } )
-                             ->setDisplay( 'name' )
-                             ->setColumnName( 'name' )
-                             ->setPlaceholder( 'All names' )
+            AdminColumnFilter::select(\App\Models\Country::class, 'name')->setDisplay('name')
+                ->setPlaceholder('All countries')
+                ->setColumnName('country_id')
             ,
         ] );
         $display->getColumnFilters()->setPlacement( 'card.heading' );

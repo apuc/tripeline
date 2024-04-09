@@ -34,7 +34,7 @@ class Place extends Section implements Initializable {
     /**
      * @var string
      */
-    protected $createTitle = "Create Content";
+    protected $createTitle = "Create Extra stops";
 
     /**
      * @var bool
@@ -94,6 +94,11 @@ class Place extends Section implements Initializable {
                                ->setHtmlAttribute( 'class', 'table-primary table-hover th-center' );
 
         $display->getColumnFilters()->setPlacement( 'card.heading' );
+
+        $display->setApply(function ($query)
+        {
+            $query->where('deleted_at', '=', null);
+        });
 
         return $display;
     }
@@ -240,7 +245,7 @@ class Place extends Section implements Initializable {
      * @return bool
      */
     public function isDeletable( Model $model ) {
-        return false;
+        return Auth::user()->isAdmin();
     }
 
     /**

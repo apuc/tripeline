@@ -8,7 +8,10 @@
     color: #666;
     width: 100%
 }
-
+.travel__banner{
+    position: absolute;
+    width: 100%;
+}
 .ss-main .ss-single-selected {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -2541,6 +2544,8 @@ a:hover {
 
 p {
     margin-top: 0;
+    overflow: auto;
+    max-height: 600;
     font-style: normal;
     font-weight: 300;
     font-size: 20px;
@@ -3695,14 +3700,14 @@ textarea.error {
 
 .footer__line-ico svg {
     width: 18px;
-    height: 18px;
+    height: 25px;
     fill: #fff
 }
 
 .footer__line-ico a, .footer__line-ico b {
     width: calc(100% - 18px);
     padding-left: 17px;
-    font-size: 25px;
+    font-size: 18px;
     color: #fff
 }
 
@@ -5445,7 +5450,7 @@ input.error ~ .select-humans__head div {
     position: relative;
     width: 100%;
     padding-top: 55px;
-    padding-bottom: 104px;
+    /*padding-bottom: 104px;*/
     border-top: 1px solid #d7d7d7
 }
 
@@ -9629,6 +9634,9 @@ input.error ~ .select-humans__head div {
 
     .request__info-item:not(:last-child) {
         margin-bottom: 40px
+    }
+    .label{
+        color: #00ff39 !important;
     }
 }
 

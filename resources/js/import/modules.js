@@ -3,6 +3,7 @@ import "%modules%/footer/footer";
 import "%modules%/calculator/calculator";
 import "%modules%/partners/partners";
 import "%modules%/sliderhome/sliderhome";
+import "%modules%/slidercompany/slidercompany";
 import "%modules%/countries/countries";
 import "%modules%/homehead/homehead";
 import "%modules%/routes3/routes3";

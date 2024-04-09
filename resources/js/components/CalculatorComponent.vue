@@ -9,20 +9,32 @@
                         <input
                             name="from"
                             placeholder="From"
-                            @input="inputFrom"
+                            @input="debounceInput"
+                            @keyup.delete="fromCityId = ''"
                             required="required"
                             type="search"
                             v-model="selectedFrom"
                             autocomplete="off"
                             @keyup="openedFrom = true"
                             @blur="toggle"
+                            @focus="fromRouteFocus()"
                         />
                     </div>
-                    <div class="custom-select__options" v-if="filteredRoutes.length > 0" :class="{ '--opened': openedFrom }">
-                        <div class="custom-select__option" @click="selectFrom(item)" v-for="(item, index) in filteredRoutes" :key="index">
+                    <div class="custom-select__options" v-if="cities.length > 0 || routes.length > 0" :class="{ '--opened': openedFrom }">
+                        <div v-if="routes.length === 0" class="custom-select__option" @click="selectFrom(item.city)" v-for="(item, index) in cities" :key="index">
                             <b>{{ item.city}}</b>
                             <em>{{ item.country }}</em>
                         </div>
+                        <div v-if="routes.length > 0" class="custom-select__option" @click="selectFrom(item.invert === 1 ? item.toCity : item.fromCity, item.id, item.invert)" v-for="(item, index) in routes" :key="index">
+                          <b>{{ item.invert === 1 ? item.toCity : item.fromCity }}</b>
+                          <em>{{ item.invert === 1 ? item.toCountry : item.fromCountry }}</em>
+                        </div>
+                    </div>
+                    <div class="custom-select__options option-clear" v-if="cities.length === 0 && routes.length === 0 && selectedFrom.length" :class="{ '--opened': openedFrom }">
+                      <div class="loader" v-if="isDownloadRoutesFrom">
+                        <img class="loader-img" src="/img/loader.png" alt="loader">
+                      </div>
+                      <span v-else>Route not found</span>
                     </div>
                 </div>
                 <div class="custom-select__change" @click="change">
@@ -35,29 +47,41 @@
                         <input
                             name="to"
                             placeholder="To"
-                            @input="inputTo"
+                            @input="debounceInput"
+                            @keyup.delete="toCityId = ''"
                             required="required"
                             type="search"
                             v-model="selectedTo"
                             autocomplete="off"
-                            @focus="openedTo = true"
+                            @focus="toRouteFocus"
                             @keyup="openedTo = true"
                             @blur="toggle"
                         />
                     </div>
-                    <div class="custom-select__options" v-if="filteredRoutesTo.length > 0" :class="{ '--opened': openedTo }">
-                        <div class="custom-select__option" @click="selectTo(item)" v-for="(item, index) in filteredRoutesTo" :key="index">
-                            <b>{{ invert === 1 ? item.from_city : item.to_city }}</b>
-                            <em>{{ invert === 1 ? item.from_country :  item.to_country }}</em>
+                    <div class="custom-select__options" v-if="cities.length > 0 || routes.length > 0" :class="{ '--opened': openedTo }">
+                        <div v-if="routes.length === 0" class="custom-select__option" @click="selectTo(item.city)" v-for="(item, index) in cities" :key="index">
+                            <b>{{ item.city }}</b>
+                            <em>{{ item.country }}</em>
                         </div>
+                        <div v-if="routes.length > 0" class="custom-select__option" @click="selectTo(item.invert === 1 ? item.fromCity : item.toCity, item.id, item.invert)" v-for="(item, index) in routes" :key="index">
+                          <b>{{ item.invert === 1 ? item.fromCity : item.toCity }}</b>
+                          <em>{{ item.invert === 1 ? item.fromCountry : item.toCountry }}</em>
+                        </div>
+                    </div>
+                    <div class="custom-select__options option-clear" v-if="cities.length === 0 && routes.length === 0 && selectedTo.length" :class="{ '--opened': openedTo }">
+                      <div class="loader" style="height: 140px;width: 220px;" v-if="isDownloadRoutesTo">
+                        <img class="loader-img" src="/img/loader.png" alt="loader">
+                      </div>
+                      <span v-else>Route not found</span>
                     </div>
                 </div>
             </div>
             <div class="date-time">
                 <v-custom-calendar></v-custom-calendar>
                 <v-time></v-time>
+              <v-humans v-if="this.width < 767" :data="{adults,childrens,luggage}"></v-humans>
             </div>
-            <v-humans :data="{adults,childrens,luggage}"></v-humans>
+            <v-humans v-if="this.width > 767" :data="{adults,childrens,luggage}"></v-humans>
             <div v-if="!this.short" class="calc__items">
                 <div class="calc__item"><b @click="toggle('extrastops')">+ {{ $t('Extra stops') }}</b>
                     <v-extrastops v-if="extrastops"></v-extrastops>
@@ -118,25 +142,39 @@ export default Vue.component("v-calculator", {
     },
     data() {
         return {
-            invert: 0,
-            popupMessage: "Your request already sended !!!",
-            searchActionsUrl: '',
-            parsedRoutes: [],
-            extrastops: false,
-            choosecar: false,
-            requirements: false,
-            route_id: null,
-            filter: {
-                from: '',
-                to: ''
-            },
-            openedFrom: false,
-            openedTo: false,
-            selectedFrom: "",
-            errorFrom: false,
-            selectedTo: "",
-            errorTo: false,
-            firstStart: false,
+          invert: 0,
+          popupMessage: "Your request already sended !!!",
+          searchActionsUrl: '',
+          parsedRoutes: [],
+          extrastops: false,
+          choosecar: false,
+          requirements: false,
+          route_id: null,
+          filter: {
+              from: '',
+              to: ''
+          },
+          openedFrom: false,
+          openedTo: false,
+          selectedFrom: "",
+          errorFrom: false,
+          selectedTo: "",
+          errorTo: false,
+          firstStart: false,
+          width: 0,
+          routes: [],
+          from: '',
+          to: '',
+          fromList: [],
+          toList: [],
+          isDownloadRoutesFrom: true,
+          isDownloadRoutesTo: true,
+          filteredRoutes: [],
+          filteredRoutesTo: [],
+          filteredRoutesFrom: [],
+          toCityId: '',
+          fromCityId: '',
+          cities: [],
         };
     },
     props: {
@@ -148,10 +186,10 @@ export default Vue.component("v-calculator", {
             type: Boolean,
             default: false
         },
-        routes: {
-            type: String,
-            default: "[]"
-        },
+        // routes: {
+        //     type: String,
+        //     default: "[]"
+        // },
         cars: {
             type: String,
             default: "[]"
@@ -186,68 +224,7 @@ export default Vue.component("v-calculator", {
         ampm() {
             return this.pm ? "PM" : "AM";
         },
-        filteredRoutes() {
-            if (true){
-                //console.log('this.parsedRoutes: ', this.parsedRoutes);
 
-                const allRoutesResult = []
-
-                this.parsedRoutes.forEach(p=>{
-                    allRoutesResult.push({city: p.from_city, country: p.from_country, invert: 0})
-                    allRoutesResult.push({city: p.to_city, country: p.to_country, invert: 1})
-                })
-
-                const fromRoutesResult = allRoutesResult.filter(r => {
-                    return this.selectedFrom.length > 0 ? r.city.toLowerCase().indexOf(this.selectedFrom.toLowerCase()) >= 0 : true;
-                })
-
-                const fromCitiesList = [];
-
-                fromRoutesResult.forEach(i=>{
-                    if (fromCitiesList.findIndex( (element) => element.city === i.city) < 0){
-                        fromCitiesList.push(i)
-                    }
-                })
-                return this.selectedFrom.length > 2 ? fromCitiesList : []
-
-            }
-
-            const fromRoutesResult = this.parsedRoutes.filter(r => {
-                return this.selectedFrom.length > 0 ? r.from_city.toLowerCase().indexOf(this.selectedFrom.toLowerCase()) >= 0 : true;
-            }).filter(r => {
-                return this.selectedTo.length > 0 ? r.to_city.toLowerCase().indexOf(this.selectedTo.toLowerCase()) >= 0 : true;
-            }).map(i => {
-                return {from_city: i.from_city, from_country: i.from_country, to_city: i.to_city, to_country: i.to_country}
-            })
-            const fromCitiesList = [];
-
-            fromRoutesResult.forEach(i=>{
-                if (fromCitiesList.findIndex( (element) => element.from_city === i.from_city) < 0){
-                    fromCitiesList.push(i)
-                }
-            })
-            return fromCitiesList
-        },
-        filteredRoutesTo() {
-
-            if (this.selectedFrom.length > 0){
-                if (this.invert === 1){
-                    return this.parsedRoutes.filter(r => {
-                        return this.selectedFrom.length > 0 ? r.to_city.toLowerCase().indexOf(this.selectedFrom.toLowerCase()) >= 0 : true;
-                    }).filter(r => {
-                        return this.selectedTo.length > 0 ? r.from_city.toLowerCase().indexOf(this.selectedTo.toLowerCase()) >= 0 : true;
-                    })
-                }
-                return this.parsedRoutes.filter(r => {
-                    return this.selectedFrom.length > 0 ? r.from_city.toLowerCase().indexOf(this.selectedFrom.toLowerCase()) >= 0 : true;
-                }).filter(r => {
-                    return this.selectedTo.length > 0 ? r.to_city.toLowerCase().indexOf(this.selectedTo.toLowerCase()) >= 0 : true;
-                })
-            }else {
-                return []
-            }
-
-        }
     },
     methods: {
         submitForm(e) {
@@ -298,26 +275,44 @@ export default Vue.component("v-calculator", {
             // this.errorFrom = this.selectedFrom.length <= 2;
             // this.errorTo = this.selectedTo.length <= 2;
         },
-        selectFrom(item) {
-            // this.openedFrom = false;
-            //console.log('item.invert: ', item.invert);
-            this.selectedFrom = item.city
-            this.invert = item.invert
+        selectFrom(value, id=null, invert) {
+          console.log(id)
+            this.selectedFrom = value;
             this.updateError();
+            this.route_id = id;
+            this.invert = invert;
         },
         inputFrom() {
             this.updateError();
         },
-        selectTo(item) {
-            // this.openedTo = false;
-            //console.log('selectTo:', item);
-            this.selectedTo = this.invert === 1 ? item.from_city : item.to_city;
-            this.route_id = item.id;
+        selectTo(value, id=null, invert) {
+          console.log('-------', id)
+            this.selectedTo = value;
+            this.route_id = id;
+            this.invert = invert;
             this.updateError();
         },
+        fromRouteFocus () {
+          this.openedFrom = true
+          this.updateError()
+          if (this.selectedFrom.length && this.selectedTo.length === 0) {
+            this.getCities(this.selectedFrom);
+          } else if (this.selectedTo.length) {
+            this.getRoutes(this.selectedFrom, this.selectedTo);
+          }
+        },
+        toRouteFocus () {
+          this.openedTo = true;
+          this.updateError();
+          if (this.selectedTo.length && this.selectedFrom.length === 0) {
+            this.getCities(this.selectedTo);
+          } else if (this.selectedFrom.length) {
+            this.getRoutes(this.selectedFrom, this.selectedTo);
+          }
+        },
         inputTo() {
-            //console.log('inputTo');
             this.updateError();
+            this.debounceInput
         },
         change() {
             let from = this.selectedFrom;
@@ -325,19 +320,109 @@ export default Vue.component("v-calculator", {
             this.selectedFrom = to;
             this.selectedTo = from;
             this.$store.commit('clearPoint');
-            this.invert = this.invert === 0 ? 1 : 0
+            if (this.invert === null) {
+              this.invert = 0;
+            }
+            this.invert = this.invert === 0 ? 1 : 0;
             this.updateError();
         },
         search() {
-
             this.$store.commit('setCart', cart);
+        },
+        updateWidth() {
+          this.width = window.innerWidth
+        },
+        debounceInput: _.debounce(function (e) {
+          this.updateError();
+          const input = e.target.name === 'from' ? this.selectedFrom : this.selectedTo;
+          if (e.target.name === 'from' && this.selectedTo.length === 0 || e.target.name === 'to' && this.selectedFrom.length === 0 ) {
+            this.getCities(input);
+          } else {
+            this.getRoutes(this.selectedFrom, this.selectedTo);
+          }
+        }, 500),
+        async getCities(city) {
+          this.routes = [];
+          this.cities = [];
+          const splitted = city.split("")
+          const first = splitted[0].toUpperCase()
+          const rest = [...splitted]
+          rest.splice(0, 1)
+          const resultCity = [first, ...rest].join("")
+          if (resultCity.length > 0) {
+            this.isDownloadRoutesFrom = true;
+            this.isDownloadRoutesTo = true;
+            await axios.get(`https://api.drivermytripline.com/api/city/search?city=${resultCity}`).then(resp => {
+              this.cities = resp.data.map(el => {
+                return {
+                  city: el._source.city,
+                  country: el._source.country
+                }
+              });
+              this.isDownloadRoutesFrom = false;
+              this.isDownloadRoutesTo = false;
+            })
+          }
+        },
+        async getRoutes(fromCity, toCity) {
+          let fromCityUppercase = '';
+          let toCityUppercase = '';
+          let splitted = '';
+          let first = '';
+          let rest = '';
+          if (fromCity.length > 0) {
+            splitted = fromCity.split("")
+            first = splitted[0].toUpperCase()
+            rest = [...splitted]
+            rest.splice(0, 1)
+            fromCityUppercase = [first, ...rest].join("")
+          }
+          if (toCity.length > 0) {
+            splitted = toCity.split("")
+            first = splitted[0].toUpperCase()
+            rest = [...splitted]
+            rest.splice(0, 1)
+            toCityUppercase = [first, ...rest].join("")
+          }
+          if (fromCityUppercase.length > 0 || toCityUppercase.length > 0) {
+            this.cities = [];
+            this.routes = [];
+            this.isDownloadRoutesFrom = true;
+            this.isDownloadRoutesTo = true;
+            await axios.get(`https://api.drivermytripline.com/api/routes/search?fromCity=${fromCityUppercase}&toCity=${toCityUppercase}`).then(resp => {
+              this.routes = resp.data.map(el => {
+                return {
+                  fromCity: el._source.fromCityName,
+                  toCity: el._source.toCityName,
+                  fromCountry: el._source.fromCountryName,
+                  toCountry: el._source.toCountryName,
+                  id: el._source.id,
+                  invert: el._source.invert
+                }
+              })
+              this.isDownloadRoutesFrom = false;
+              this.isDownloadRoutesTo = false;
+            })
+          }
         }
     },
     mounted() {
+        this.width = window.innerWidth
+        window.addEventListener('resize', this.updateWidth );
 
         initValidation(".js-calculator");
 
         let $this = this;
+
+        document.addEventListener("bouncerFormValid", function (el) {
+            if (el.target.dataset?.entity === 'search') {
+                try {
+                    $this.submitForm(el)
+                } catch (e) {
+                }
+            }
+            return false
+        });
 
         document.addEventListener("bouncerFormValidRequest", function (el) {
             if (el.target.dataset?.entity === 'search') {
@@ -350,7 +435,12 @@ export default Vue.component("v-calculator", {
         });
 
 
-        this.parsedRoutes = JSON.parse(this.routes)
+        // this.parsedRoutes = JSON.parse(this.routes)
+        // axios.get('/route-list').then( resp => {
+        //   this.parsedRoutes = resp.data
+        //   // localStorage.setItem('routes', resp.data)
+        //   // console.log(this.parsedRoutes)
+        // });
         this.searchActionsUrl = '/' + (window.App.language ?? 'en') + '/search';
         this.selectedFrom = this.request.from ?? ''
         this.selectedTo = this.request.to ?? ''
@@ -370,5 +460,40 @@ export default Vue.component("v-calculator", {
 }
 .tickets__footer-price b{
     margin-left: 5px
+}
+.option-clear{
+  height: 150px;
+  width: 100%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.option-clear img{
+  width: 250px;
+}
+.loader{
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loader-img{
+  width: 40px !important;
+  height: 40px !important;
+  animation-name: rotation;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes rotation {
+  0% {
+    transform:rotate(0deg);
+  }
+  100% {
+    transform:rotate(360deg);
+  }
 }
 </style>

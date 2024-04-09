@@ -3,6 +3,7 @@
 namespace App\Http\Sections;
 
 use AdminColumn;
+use AdminColumnEditable;
 use AdminColumnFilter;
 use AdminDisplay;
 use AdminForm;
@@ -78,7 +79,10 @@ class Country extends Section implements Initializable
                 })
                 ->setSearchable(false)
             ,
+            AdminColumnEditable::checkbox('visible_routes', 'closed', 'open')->setLabel('Status'),
         ];
+
+        //dd(\App\Models\Country::where('id', 75)->get());
 
         $display = AdminDisplay::datatables()
             ->setName('firstdatatables')
@@ -89,17 +93,11 @@ class Country extends Section implements Initializable
             ->setHtmlAttribute('class', 'table-primary table-hover th-center')
         ;
 
-        $display->setColumnFilters([
-            AdminColumnFilter::select()
-                ->setModelForOptions(\App\Models\Country::class, 'name')
-                ->setLoadOptionsQueryPreparer(function($element, $query) {
-                    return $query;
-                })
-                ->setDisplay('name')
-                ->setColumnName('name')
-                ->setPlaceholder('All names')
+        $display->setColumnFilters( [
+            AdminColumnFilter::select(\App\Models\Country::class, 'subregion')->setDisplay('subregion')
+                ->setPlaceholder('All subregions')
             ,
-        ]);
+        ] );
         $display->getColumnFilters()->setPlacement('card.heading');
 
         return $display;

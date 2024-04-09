@@ -14,17 +14,31 @@
         <div class="container pabout__wrap">
             <div class="pabout__grid">
                 <h2>Meet the team</h2>
-                @if($content)
-                    @foreach($content['team_response'] as $team)
-                        <div class="pabout__grid-item"><i>
-                                <img src="{{asset($team['image'])}}" alt="{{$team['title']}}"></i>
-                            <h4>{{$team['title']}}</h4><em>{{$team['position']}}</em>
-                            <p>
-                                {!! $team['body'] !!}
-                            </p>
+                <div class="sliderhome-desktop-mob container">
+                    <div class="slidercompany">
+                        <div class="slidercompany__wrap">
+                            <div class="sliderhome-slider swiper-container">
+                                <!--   Additional required wrapper-->
+                                <div class="swiper-wrapper">
+                                    <!-- Slides-->
+                                    @if($content)
+                                        @foreach($content['team_response'] as $team)
+                                            <div class="swiper-slide">
+                                                <div class="pabout__grid-item"><i>
+                                                        <img src="{{asset($team['image'])}}" alt="{{$team['title']}}"></i>
+                                                    <h4>{{$team['title']}}</h4><em>{{$team['position']}}</em>
+                                                    <p>
+                                                        {!! $team['body'] !!}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                    @endforeach
-                @endif
+                    </div>
+                </div>
             </div>
         </div>
         <div class="container pabout__footer">

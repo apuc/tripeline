@@ -1,6 +1,6 @@
 <template>
     <div class="custom-time" v-click-outside="close">
-        <div class="custom-time__head" :class="{'error': error}" @click="toggle"><span>{{ hours | toNormNumber }}:{{ minutes | toNormNumber }} {{ ampm }}</span>
+        <div class="custom-time__head" :class="{'error': error}" @click="toggle"><span>{{ hours | toNormNumber }}:{{ minutes | toNormNumber }}</span>
             <input hidden name="hours" :value="hours"/>
             <input hidden name="minutes" :value="minutes"/>
             <input hidden name="pm" :value="pm"/>
@@ -10,13 +10,6 @@
             </svg>
         </div>
         <div class="custom-time__dropdown" v-show="opened">
-            <div class="custom-time__dropdown-head"><span :class="{ 'active': !pm }" @click="pm = false">AM</span>
-                <button type="button" @click="pm = !pm">
-                    <svg class="icon icn-arrows-nocollor">
-                        <use xlink:href="/img/sprites/sprite.svg#icn-arrows-nocollor"></use>
-                    </svg>
-                </button>
-                <span :class="{ 'active': pm }" @click="pm = true">PM</span></div>
             <div class="custom-time__dropdown-content">
                 <div class="num-select">
                     <button class="plus" type="button" @click="hPlus">
@@ -86,11 +79,6 @@ export default Vue.component("v-time", {
         this.hours = this.h;
         this.minutes = this.m;
     },
-    computed: {
-        ampm() {
-            return this.pm ? "PM" : "AM";
-        }
-    },
     methods: {
         toggle() {
             this.opened = !this.opened;
@@ -106,19 +94,11 @@ export default Vue.component("v-time", {
         },
         hPlus() {
             this.updateTime();
-            // if(this.ampm === "PM") {
-            //   this.hours = this.hours >= 23 ? 0 : this.hours + 1;
-            // } else {
-            // }
-            this.hours = this.hours >= 12 ? 0 : this.hours + 1;
+            this.hours = this.hours >= 24 ? 0 : this.hours + 1;
         },
         hMinus() {
             this.updateTime();
-            // if(this.ampm === "PM") {
-            //   this.hours = this.hours <= 0 ? 23 : this.hours - 1;
-            // } else {
-            // }
-            this.hours = this.hours <= 0 ? 12 : this.hours - 1;
+            this.hours = this.hours <= 0 ? 24 : this.hours - 1;
         },
         mPlus() {
             this.updateTime();
@@ -128,13 +108,6 @@ export default Vue.component("v-time", {
             this.updateTime();
             this.minutes = this.minutes <= 0 ? 59 : this.minutes - 1;
         }
-    },
-    watch: {
-        // ampm() {
-        //   if(this.ampm === "AM") {
-        //     if(this.hours > 12) this.hours = 0;
-        //   }
-        // }
     },
     directives: {
         ClickOutside

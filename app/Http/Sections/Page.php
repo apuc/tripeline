@@ -68,7 +68,7 @@ class Page extends Section implements Initializable
                         ->orWhere('title_en', 'like', '%'.$search.'%')
                         ->orWhere('body_en', 'like', '%'.$search.'%');
                 }),
-            AdminColumn::text('lang', 'Language', 'lang'),
+            AdminColumn::text('lang', 'Language', 'lang')->setSearchable( false ),
             AdminColumn::text('created_at', 'Created / updated', 'updated_at')
                 ->setWidth('160px')
                 ->setOrderable(function($query, $direction) {

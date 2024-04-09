@@ -8,9 +8,14 @@
             </div>
         </div>
         <div class="routes-content container">
-            @foreach($routes->chunk(18) as $three)
+            @php($routesData = ceil($routes->count() / 4))
+            @foreach($routes->chunk($routesData) as $three)
                 <ul>
                     @foreach($three as $country)
+                        <script>
+                            let p = {{$country['name']}}.replace(/\(.+\)./,'')
+                            console.log(p)
+                        </script>
                         <li><a href="{{ route('routes', app()->getLocale()) . '/' . $country['id'] }}">{{ $country['name'] }}</a></li>
                     @endforeach
                 </ul>

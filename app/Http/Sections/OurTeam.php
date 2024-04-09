@@ -64,17 +64,19 @@ class OurTeam extends Section implements Initializable {
      * @return DisplayInterface
      */
     public function onDisplay( $payload = [] ) {
+
+        //dd(\App\Models\OurTeam::all());
         $columns = [
             AdminColumn::text( 'id', '#' )->setWidth( '50px' )->setHtmlAttribute( 'class', 'text-center' ),
             AdminColumn::link( 'title_en', 'Title', 'created_at' )
                        ->setSearchCallback( function ( $column, $query, $search ) {
                            return $query
-                               ->orWhere( 'content_en', 'like', '%' . $search . '%' )
+                               ->orWhere( 'title_en', 'like', '%' . $search . '%' )
                                ->orWhere( 'position_en', 'like', '%' . $search . '%' );
                        } )
             ,
-            AdminColumn::text( 'position_en', 'Position' ),
-            AdminColumn::text( 'status', 'Status' ),
+            AdminColumn::text( 'position_en', 'Position' )->setSearchable( false ),
+            AdminColumn::text( 'status', 'Status' )->setSearchable( false ),
             AdminColumn::text( 'created_at', 'Created / updated', 'updated_at' )
                        ->setWidth( '160px' )
                        ->setOrderable( function ( $query, $direction ) {

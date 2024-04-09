@@ -1,9 +1,5 @@
 .custom-select {
-  display: inline-block;
-  position: relative;
-  z-index: 30;
-  //width: 244px;
-  width: 100%;
+  
 
   &.--left &__head {
     border-radius: 7px 0 0 0;
@@ -157,7 +153,7 @@
     border-radius: 100%;
     cursor: pointer;
     margin-top: -2px;
-    
+
     svg {
       display: block;
       width: 14px;

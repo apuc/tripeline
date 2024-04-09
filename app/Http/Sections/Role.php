@@ -70,7 +70,7 @@ class Role extends Section implements Initializable
                     $query->orderBy('created_at', $direction);
                 })
             ,
-            AdminColumn::boolean('name', 'On'),
+            AdminColumn::boolean('name', 'On')->setSearchable(false),
             AdminColumn::text('created_at', 'Created / updated', 'updated_at')
                 ->setWidth('160px')
                 ->setOrderable(function($query, $direction) {
@@ -89,17 +89,12 @@ class Role extends Section implements Initializable
             ->setHtmlAttribute('class', 'table-primary table-hover th-center')
         ;
 
-        $display->setColumnFilters([
-            AdminColumnFilter::select()
-                ->setModelForOptions(\App\Models\Role::class, 'name')
-                ->setLoadOptionsQueryPreparer(function($element, $query) {
-                    return $query;
-                })
-                ->setDisplay('name')
-                ->setColumnName('name')
+        $display->setColumnFilters( [
+            AdminColumnFilter::select(\App\Models\Role::class, 'name')->setDisplay('name')
                 ->setPlaceholder('All names')
+                ->setColumnName('name')
             ,
-        ]);
+        ] );
         $display->getColumnFilters()->setPlacement('card.heading');
 
         return $display;

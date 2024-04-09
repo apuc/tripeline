@@ -35,6 +35,9 @@
                                     <em>{{ item.country }}</em>
                                 </div>
                             </div>
+                            <div class="custom-select__options option-clear" v-if="routes.length === 0 & !filteredRoutes.length" :class="{ '--opened': openedFrom }">
+                              <img src="https://interio.ua/dynamic-resources/def_image/no-photo-big-570-380.gif" alt="gif">
+                            </div>
                         </div>
                         <div class="custom-select__change" @click="change">
                             <svg class="icon">
@@ -61,19 +64,36 @@
                                     <em>{{ searchInvert ? item.from_country : item.to_country }}</em>
                                 </div>
                             </div>
+                            <div class="custom-select__options option-clear" v-if="routes.length === 0 & !filteredRoutes.length" :class="{ '--opened': openedTo }">
+                              <img src="https://interio.ua/dynamic-resources/def_image/no-photo-big-570-380.gif" alt="gif">
+                            </div>
                         </div>
                     </div>
                     <!--                    <v-select :orderRoute={orderRoute} :filteredRoutes="filteredRoutes"></v-select>-->
                     <div class="date-time">
                         <v-custom-calendar :d="data"></v-custom-calendar>
                         <v-time :h="hours" :m="minutes"></v-time>
+                      <v-humans class="humans-mobile" :data="{adults,childrens,luggage}" @return="returnPersone"></v-humans>
                     </div>
-                    <v-humans :data="{adults,childrens,luggage}" @return="returnPersone"></v-humans>
+                  <v-humans class="humans-comp" :data="{adults,childrens,luggage}" @return="returnPersone"></v-humans>
                 </div>
             </div>
             <div class="psearch__other">
-                <h3>{{ $t('Visit along the way') }}</h3>
-                <div class="glide">
+                  <div class="glide">
+                    <div class="glide__header">
+                      <h3>{{ $t('Visit along the way') }}</h3>
+                      <div class="glide__arrows" data-glide-el="controls">
+                        <button class="glide_arrow glide__arrow--left" data-glide-dir="<">
+                          <
+                        </button>
+                        <div class="line">
+                          <hr/>
+                        </div>
+                        <button class="glide_arrow glide__arrow--right" data-glide-dir=">">
+                          >
+                        </button>
+                      </div>
+                    </div>
                     <div class="glide__track" data-glide-el="track">
                         <ul class="glide__slides">
                             <li class="glide__slide" v-for="(item, index) in getCurrentRoutePlaces" :key="index">
@@ -83,8 +103,8 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="glide__bullets" data-glide-el="controls[nav]">
-                        <button class="glide__bullet" v-for="(item, index) in articleList" :key="index" type="button" :data-glide-dir="'=' + index"></button>
+                    <div class="glide__bullets" data-guide-el="controls[nav]">
+                      <button @click.prevent="changeSlide(i)" :ref="i - 1" v-for="i in getCurrentRoutePlaces.length" :key="i" class="glide__bullet" :data-glide-dir='"=" + i'></button>
                     </div>
                 </div>
             </div>
@@ -130,8 +150,9 @@
 
                         <div class="tickets__buy">
                         <button>
-                                <span>{{ $t('BUY FOR') }} <i :class="currency.toLowerCase() +'_money'"></i>{{ ' ' }} {{ parseFloat(calculatePrice(this.totalCarPrice.toFixed(2), this.withstopsListPrice)).toFixed(0) }}</span>
-                            </button>
+<!--                                <span>{{ $t('BUY FOR') }} <i :class="currency.toLowerCase() +'_money'"></i>{{ ' ' }} {{ parseFloat(calculatePrice(this.totalCarPrice.toFixed(2), this.withstopsListPrice)).toFixed(0) }}</span>-->
+                          <span>{{ $t('BUY FOR') }} <i :class="currency.toLowerCase() +'_money'"></i>{{ ' ' }} {{ calculateTotalPrice }}</span>
+                        </button>
                         </div>
                     </div>
                     <div v-for="(item, index) in getPassengersExtraForUpdate" class="yourride__selected extra">
@@ -221,6 +242,7 @@
                             <div class="tickets__footer">
                                 <i><img :src="'/' + item.car.image" :alt="item.car.title"></i>
                                 <div class="tickets__footer-info">
+                                    <h4 class="car__vehicle-title">{{ item.car.vehicle.title }}</h4>
                                     <h4>{{ item.car.title }}</h4><em>{{ item.brand }}</em>
                                     <div><span>{{ item.car.places_min }} - {{ item.car.places_max }}</span>
                                         <svg class="icon">
@@ -235,7 +257,7 @@
                                 </div>
                                 <div class="tickets__footer-price">
                                     <!--                                    <b>{{ currency.toUpperCase() }}{{ calculatePrice((parseFloat(totalCarPrice) + parseFloat(item.car.price)) - (parseFloat(totalCarPrice) + withstopsListPrice)) }}</b>-->
-                                    <b><i :class="currency.toLowerCase() +'_money'"></i>{{ parseFloat(calculatePrice(item.car.price, withstopsListPrice)).toFixed(0) }}</b>
+                                    <b><i :class="currency.toLowerCase() +'_money'"></i>{{ calculateTotalPriceVehicle(item.car) }}</b>
                                 </div>
                             </div>
                         </label>
@@ -260,6 +282,7 @@ import Withstops from "./WithstopsComponent";
 import Article from "./ArticleComponent";
 
 import {mapState, mapMutations} from 'vuex'
+import toString from "lodash/toString";
 
 export default Vue.component("v-custom-search", {
     comments: {
@@ -353,12 +376,17 @@ export default Vue.component("v-custom-search", {
             selectedTo: "",
             errorTo: false,
             firstStart: false,
+            routes: [],
         }
     },
     created() {
         this.firstStart = true;
     },
     mounted() {
+        axios.get('/route-list').then( resp => {
+          this.routes = resp.data
+        });
+
         initValidation(".js-psearch-from");
 
         let $this = this;
@@ -384,11 +412,11 @@ export default Vue.component("v-custom-search", {
         }
 
         this.updatePrice()
-
-        if (window.matchMedia("(max-width: 900px)").matches) {
+        setTimeout(() => {
+          if (window.matchMedia("(max-width: 900px)").matches) {
             this.glideMount();
-        }
-
+          }
+        }, 500)
         window.addEventListener("resize", debounce(() => {
             if (window.matchMedia("(max-width: 900px)").matches) {
                 this.glideMount();
@@ -402,6 +430,9 @@ export default Vue.component("v-custom-search", {
         }, 500));
     },
     methods: {
+        changeSlide(i){
+            this.glide.go(`=${i - 1}`)
+        },
         getRouteDate() {
             return Vue.moment(this.data + " " + (parseInt(this.hours)) + ":" + this.minutes + (this.pm ? ' PM' : ' AM'), "DD.MM.YYYY h:m A")
                 .format('YYYY.MM.DD HH:mm:ss');
@@ -519,7 +550,17 @@ export default Vue.component("v-custom-search", {
             return issetPoint
         },
         glideMount() {
-            this.glide = new Glide(".glide").mount({Controls});
+            this.glide = new Glide(".glide", {perView: 1, focusAt: 'center'})
+            let data = this;
+            data.$refs[data.glide._i][0].classList.add('active__bullet')
+            this.glide.on('run', function() {
+              document.querySelectorAll('.glide__bullet').forEach(function (item){
+                item.classList.remove('active__bullet')
+              })
+              let i = data.glide._i
+              data.$refs[i][0].classList.add('active__bullet')
+            })
+            this.glide.mount({Controls});
         },
         glideDestroy() {
             this.glide.destroy();
@@ -532,50 +573,106 @@ export default Vue.component("v-custom-search", {
             this.updatePrice()
         },
         returnPersone(e) {
-            console.log('returnPersone', e);
             this.passengers = [];
             this.passengers_extra = [];
-            let totalPassengers = e.passengers
-            let current_passengers = e.passengers
-            let current_luggage = e.luggage
-            let inOneCar = this.getCarsOrdered.filter(c => {
+            let totalPassengers = e.passengers;
+            let current_passengers = e.passengers;
+            let current_luggage = e.luggage;
+            if (totalPassengers <= 7) {
+              let inOneCar = this.getCarsOrdered.filter(c => {
                 return current_passengers <= c.places_max && current_luggage<=c.luggage
-            })
-            if (inOneCar.length > 0) {
+              })
+              if (inOneCar.length > 0) {
                 this.passengers.push({car: inOneCar[0], count: 1})
 
                 inOneCar.map(c => {
-                    this.passengers_extra.push({car: c, count: 1});
+                  this.passengers_extra.push({car: c, count: 1});
                 })
+              }
             }
-            let inMoreCar = []
-            if (inOneCar.length === 0) {
-                for (let i = this.getCarsOrdered.length - 1; i >= 0; i--) {
-                    if (totalPassengers > 0) {
-                        let carsFloat = (totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']));
-                        let cars = Math.trunc(totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']))
-                        if (cars >= 0) {
-                            if (carsFloat - cars > 0.50 || this.getCarsOrdered.length === 1) {
-                                cars += 1;
-                            }
-                            inMoreCar.push({car: this.getCarsOrdered[i], count: cars})
-                            totalPassengers -= parseInt(this.getCarsOrdered[i]['places_max']) * (cars === 0 ? 1 : cars)
-                        }
-                    }
-                }
-                if (totalPassengers > 0) {
-                    for (let i = this.getCarsOrdered.length - 1; i >= 0; i--) {
-                        if (totalPassengers > 0) {
-                            let cars = Math.trunc(totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']))
-                            inMoreCar.push({car: this.getCarsOrdered[i], count: cars})
-                            totalPassengers -= parseInt(this.getCarsOrdered[i]['places_max'])
-                        }
-                    }
-                }
 
-
+            if (totalPassengers > 7) {
+              let vansCount = Math.floor(totalPassengers / 7);
+              let otherPassengers = totalPassengers % 7;
+              if (otherPassengers > 4) {
+                vansCount++
+              }
+              let firstCar = null;
+              if (otherPassengers > 0 && otherPassengers <= 4) {
+                firstCar = this.getCarsOrdered.find(c => {
+                  return otherPassengers <= c.places_max
+                })
+              }
+              if (firstCar !== null) {
+                this.passengers.push({car: firstCar, count: 1})
+                this.passengers.push({car: this.getCarsOrdered[2], count: vansCount})
+              } else {
+                this.passengers.push({car: this.getCarsOrdered[2], count: vansCount})
+              }
             }
-            this.passengers.push(...inMoreCar)
+            // if (totalPassengers >= 8 && totalPassengers <= 10) {
+            //   this.passengers.push({car: this.getCarsOrdered[0], count: 1})
+            //   this.passengers.push({car: this.getCarsOrdered[2], count: 1})
+            // }
+            // if (totalPassengers === 11) {
+            //   this.passengers.push({car: this.getCarsOrdered[1], count: 1})
+            //   this.passengers.push({car: this.getCarsOrdered[2], count: 1})
+            // }
+            // if (totalPassengers >= 12 && totalPassengers <= 14) {
+            //   this.passengers.push({car: this.getCarsOrdered[2], count: 2})
+            // }
+            // if (totalPassengers >= 15 && totalPassengers <= 17) {
+            //   this.passengers.push({car: this.getCarsOrdered[0], count: 1})
+            //   this.passengers.push({car: this.getCarsOrdered[2], count: 2})
+            // }
+            // if (totalPassengers === 18) {
+            //   this.passengers.push({car: this.getCarsOrdered[1], count: 1})
+            //   this.passengers.push({car: this.getCarsOrdered[2], count: 2})
+            // }
+            // if (totalPassengers > 18) {
+            //   let inMoreCar = []
+            //   if (inOneCar.length === 0 && totalPassengers > 0) {
+            //     // for (let i = this.getCarsOrdered.length - 1; i >= 0; i--) {
+            //     //     if (totalPassengers > 0) {
+            //     //         let carsFloat = (totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']));
+            //     //         let cars = Math.trunc(totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']))
+            //     //         if (cars >= 0) {
+            //     //             if (carsFloat - cars > 0.50 || this.getCarsOrdered.length === 1) {
+            //     //                 cars += 1;
+            //     //             }
+            //     //             inMoreCar.push({car: this.getCarsOrdered[i], count: cars})
+            //     //             totalPassengers -= parseInt(this.getCarsOrdered[i]['places_max']) * (cars === 0 ? 1 : cars)
+            //     //         }
+            //     //     }
+            //     // }
+            //     let largestCar = {}
+            //     this.getCarsOrdered.forEach(function (item) {
+            //       if (largestCar['places_max'] !== undefined){
+            //         if (largestCar['places_max'] < item['places_max']) {
+            //           largestCar = item
+            //         }
+            //       } else {
+            //         largestCar = item
+            //       }
+            //     })
+            //     const count = Math.ceil(totalPassengers / largestCar['places_max'])
+            //     inMoreCar.push({car: largestCar, count: count})
+            //     // if (totalPassengers > 0) {
+            //     //     for (let i = this.getCarsOrdered.length - 1; i >= 0; i--) {
+            //     //         if (totalPassengers > 0) {
+            //     //             let cars = Math.trunc(totalPassengers / parseInt(this.getCarsOrdered[i]['places_max']))
+            //     //             inMoreCar.push({car: this.getCarsOrdered[i], count: cars})
+            //     //             totalPassengers -= parseInt(this.getCarsOrdered[i]['places_max'])
+            //     //         }
+            //     //     }
+            //     // }
+            //
+            //
+            //   }
+            //   this.passengers.push(...inMoreCar)
+            // }
+             console.log(this.getCarsOrdered)
+             console.log(this.passengers)
         },
         addNewStopItem(item, type) {
             let exists = this.withstopsList.find(val => {
@@ -640,11 +737,14 @@ export default Vue.component("v-custom-search", {
         },
         calculatePrice(price, withstopsListPrice) {
             return (
-                ((parseFloat(price) +
-                parseFloat(this.current.price)) *
-                parseFloat(this.total_rate)) + parseFloat(withstopsListPrice)).toFixed(2)
-        }
+                Math.ceil((parseFloat(price) * parseFloat(this.total_rate)) +
+                parseFloat(withstopsListPrice)))
+        },
+        calculateTotalPriceVehicle(car) {
+          return Math.ceil(parseFloat(car.price));
+        },
     },
+
     computed: {
         ...mapState({
             cart: store => store.cart,
@@ -656,6 +756,9 @@ export default Vue.component("v-custom-search", {
             country_rate: store => store.country_rate,
             total_rate: store => (store.total_rate).toFixed(2),
         }),
+        calculateTotalPrice() {
+          return (Math.ceil(parseFloat(this.totalCarPrice)) + parseFloat(this.withstopsListPrice));
+        },
         getPassengersExtraForUpdate() {
             if (this.passengers.length === 1) {
 
@@ -695,8 +798,9 @@ export default Vue.component("v-custom-search", {
         totalCarPrice() {
             let totalPrice = 0;
             this.passengers.forEach(p => {
-                totalPrice += parseFloat(p.car.price)
+                totalPrice += parseFloat(p.car.price) * p.count
             })
+            console.log('tttttttt', totalPrice)
             return totalPrice;
         },
         ampm() {
@@ -744,7 +848,6 @@ export default Vue.component("v-custom-search", {
             })
         },
         getPoints(){
-            console.log('getPoints', this.searchInvert);
             if (this.searchInvert){
                 return this.points.slice().reverse()
             }else{
@@ -752,7 +855,6 @@ export default Vue.component("v-custom-search", {
             }
         },
         getCurrentRoutePlaces(){
-            console.log('getPassengersExtra', this.searchInvert);
             if (this.searchInvert){
                 return this.places.slice().reverse()
             }else{
@@ -765,6 +867,9 @@ export default Vue.component("v-custom-search", {
     watch: {
         points() {
             this.updatePrice()
+        },
+        glide: function () {
+          console.log('11')
         }
     }
 });
@@ -779,7 +884,14 @@ export default Vue.component("v-custom-search", {
 .yourride__selected.extra{
     padding-top: 20px;
 }
-
+.glide__arrows{
+  display: none;
+}
+@media (max-width: 900px) {
+  .glide__arrows{
+    display: flex;
+  }
+}
 @media (max-width: 580px) {
     .yourride__selected .tickets__buy {
         width: 100%;
@@ -789,4 +901,46 @@ export default Vue.component("v-custom-search", {
 .tickets__footer-price b{
     margin-left: 5px
 }
+.option-clear{
+  height: 150px;
+  width: 100%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.option-clear img{
+  width: 250px;
+}
+.humans-mobile{
+  display: none;
+}
+@media (min-width: 520px) {
+  .custom-select__head input, .date-time, .custom-select__change{
+    border: none;
+  }
+}
+@media (max-width: 520px) {
+  .humans-mobile{
+    display: block;
+  }
+  .humans-comp{
+    display: none;
+  }
+}
+.glide__bullet{
+  margin: 0.25em;
+  width: 12px;
+  height: 12px;
+  transition: background ease .2s;
+}
+.active__bullet{
+  transition: background ease .2s;
+  background: #ec824a !important;
+}
+.car__vehicle-title{
+  font-size: 22px;
+}
+
 </style>

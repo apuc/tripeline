@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{{ $content['meta_title'] ?? config('app.name', 'TripLine')  }}</title>
+    <meta name="robots" content="noindex" />
     <!-- CSRF Token -->
     <meta name="description"
           content="{{ $content['meta_description'] ?? ''  }}">
@@ -36,12 +37,22 @@
 
     <link rel="stylesheet" href="{{ asset('styles/main.min.css') }}">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MDMWS9J7');</script>
+    <!-- End Google Tag Manager -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" defer></script>
 
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.12/css/intlTelInput.css" rel="stylesheet">
 
-    <script src="https://js.stripe.com/v3/"></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyDT5h2sEd76op2hB_4ML6yiWJ6aka-oFRU"></script>
+
+    <script src="https://js.stripe.com/v3/" defer></script>
 
 
     <script src="{{ asset('js/app.js') }}" defer></script>
@@ -121,8 +132,9 @@
                         <ul>
                             <li><a href="{{ route('company', app()->getLocale()) }}">{!! __("menu.company") !!}</a></li>
                             <li><a href="#">{!! __("menu.discover") !!}</a></li>
+                            <li><a href="https://mytripline.com/sightseeing?en">Sightseeing tour</a></li>
                             <li><a href="{{ route('routes', app()->getLocale()) }}">{!! __("menu.routes") !!}</a></li>
-                            <li><a href="#">{!! __("menu.become_a_partner") !!}</a></li>
+                            <li><a href="{{ route('partner', app()->getLocale()) }}">{!! __("menu.become_a_partner") !!}</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -255,13 +267,48 @@
         {{--        </div>--}}
     @endauth
 </div>
+<!-- Messenger Plugin chatu Code -->
+<div id="fb-root"></div>
+
+<!-- Your Plugin chatu code -->
+<div id="fb-customer-chat" class="fb-customerchat">
+</div>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MDMWS9J7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<script>
+  var chatbox = document.getElementById('fb-customer-chat');
+  chatbox.setAttribute("page_id", "100508448639256");
+  chatbox.setAttribute("attribution", "biz_inbox");
+</script>
+
+<!-- Your SDK code -->
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      xfbml            : true,
+      version          : 'v14.0'
+    });
+  };
+
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js';
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
 </body>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.11/jquery.mask.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.11/jquery.mask.js" defer></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.12/js/intlTelInput.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/4.0.8/jquery.inputmask.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.12/js/intlTelInput.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/4.0.8/jquery.inputmask.bundle.min.js" defer></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.12/css/intlTelInput.css" rel="stylesheet">
 {{--<script id="stripe-js" src="https://js.stripe.com/v3/" async></script>--}}
 

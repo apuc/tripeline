@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,6 +23,12 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'first_name',
+        'last_name',
+        'status',
+        'role_id',
+        'phone',
+        'email_verified_at',
     ];
 
     /**
@@ -42,6 +50,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    protected $with = [
+        'profile',
+        'device'
+    ];
+
     public function isAdmin(){
         return $this->role_id === 1;
     }
@@ -52,5 +65,24 @@ class User extends Authenticatable
 
     public function isCustomer(){
         return $this->role_id === 3;
+    }
+
+    public function isPartner(){
+        return $this->role_id === 4 || $this->role_id === 5;
+    }
+
+    public function profile() : HasOne
+    {
+        return $this->hasOne(Profile::class);
+    }
+
+    public function company() : HasOne
+    {
+        return $this->hasOne(Company::class);
+    }
+
+    public function device() : HasOne
+    {
+        return $this->hasOne(UserDevice::class);
     }
 }

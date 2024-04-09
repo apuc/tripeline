@@ -3,6 +3,7 @@
 namespace App\Http\Sections;
 
 use AdminColumn;
+use AdminColumnEditable;
 use AdminColumnFilter;
 use AdminDisplay;
 use AdminForm;
@@ -21,6 +22,7 @@ use SleepingOwl\Admin\Form\Buttons\Save;
 use SleepingOwl\Admin\Form\Buttons\SaveAndClose;
 use SleepingOwl\Admin\Form\Buttons\SaveAndCreate;
 use SleepingOwl\Admin\Section;
+use AdminDisplayFilter;
 
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
@@ -92,6 +94,8 @@ class Routes extends Section implements Initializable {
                        ->setSearchable( false )
             ,
         ];
+//
+//        dd(\App\Models\Routes::first());
 
         $display = AdminDisplay::datatables()
                                ->setName( 'firstdatatables' )
@@ -101,18 +105,56 @@ class Routes extends Section implements Initializable {
                                ->setColumns( $columns )
                                ->setHtmlAttribute( 'class', 'table-primary table-hover th-center' );
 
+//        $display->setFilters(
+//            AdminDisplayFilter::field('countries.name')->setTitle('price [:value]')
+//        )
+//            ->setColumns(
+//                AdminColumn::link('title', 'Заголовок'),
+//                AdminColumn::link('category', 'Категория'),
+//                AdminColumn::datetime('created_at', 'Дата публикации')->setWidth('150px')
+//            )->paginate(20);
+        //dd(\App\Models\Country::all());
+//        dd(\App\Models\Routes::first());
+
         $display->setColumnFilters( [
-            AdminColumnFilter::select()
-                             ->setModelForOptions( \App\Models\Country::class, 'name' )
-                             ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
-                                 return $query;
-                             } )
-                             ->setDisplay( 'name' )
-                             ->setColumnName( 'name' )
-                             ->setPlaceholder( 'All names' )
-            ,
+                 AdminColumnFilter::select(\App\Models\Country::class, 'name')->setDisplay('name')
+                     ->setPlaceholder('All names')
+                     ->setColumnName('route_from_country_id')
+                ,
+                AdminColumnFilter::select()
+                    ->setOptions( [
+                        'open'  => 'Open',
+                        'closed' => 'Closed'
+                    ] )
+                    ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
+                        return $query;
+                    } )
+                    ->setDisplay( 'status' )
+                    ->setColumnName( 'status' )
+                    ->setPlaceholder( 'All statuses' )
+                ,
         ] );
         $display->getColumnFilters()->setPlacement( 'card.heading' );
+
+//        $display->setColumnFilters( [
+//            AdminColumnFilter::select()
+//                             ->setModelForOptions( \App\Models\Country::class, 'name' )
+//                             ->setLoadOptionsQueryPreparer( function ( $element, $query ) {
+//                                 return $query;
+//                             } )
+//                             ->setDisplay( 'name' )
+//                             ->setColumnName( 'name' )
+//                             ->setPlaceholder( 'All names' )
+//            ,
+//        ] );
+//        $display->getColumnFilters()->setPlacement( 'card.heading' );
+
+
+
+        $display->setApply(function ($query)
+        {
+            $query->where('deleted_at', '=', null);
+        });
 
         return $display;
     }
@@ -213,7 +255,7 @@ class Routes extends Section implements Initializable {
      * @return bool
      */
     public function isDeletable( Model $model ) {
-        return false;
+        return Auth::user()->isAdmin();
     }
 
     /**

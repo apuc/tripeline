@@ -1,0 +1,21 @@
+section.partners
+    .container
+        .partners__wrap
+            .partners__text
+                h4 We made a decision in 2020 to equalize the opportunities and maintain the sameexperience for every customer via this simple system: To interconnect certain destinantions and simplify the travelling itself for everyone.
+                p We supposed public transport might turn into stressful and time-consuming sport, which has encouraged us to come up with this idea: The services we are offering are managed into from A to B“ journeys, naturally mastered with high comfort and efficiency of the ride.
+                .btn-border
+                    span Read more
+                    +svg("arrow-long")
+
+    .partners__slider
+        .container
+            h2.--fw-400 Partners
+
+        .partners-slider.swiper-container
+            // Additional required wrapper
+            .swiper-wrapper
+                // Slides
+                each i in [1,2,3,4,5,6,7,8,9,0]
+                    .swiper-slide
+                        img(src="img/slider-img.jpg" alt="IMG")

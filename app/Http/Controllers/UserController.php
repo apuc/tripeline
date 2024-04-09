@@ -59,4 +59,24 @@ class UserController extends Controller {
             return redirect()->guest(route('home', '#login', app()->getLocale()));
         }
     }
+
+    public function cabinet_api( \Illuminate\Http\Request $request ) {
+
+        if ( Auth::check() ) {
+            return
+                [
+                    'user'   => [
+                        "email" => Auth::user()->email,
+                        "first_name" => Auth::user()->first_name,
+                        "last_name" => Auth::user()->last_name,
+                        "day_of_birth" => Auth::user()->day_of_birth,
+                    ],
+                    'orders' => \App\Models\RouteOrder::select()->where( 'user_id', Auth::user()->id )->get()
+                ];
+        } else {
+            return redirect()->guest(route('home', '#login', app()->getLocale()));
+        }
+
+
+    }
 }

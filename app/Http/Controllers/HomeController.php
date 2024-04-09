@@ -28,51 +28,51 @@ class HomeController extends Controller {
 
         $content = Page::query()->where([['slug', '=', 'home']])->first() ?? false;
 
-        $routes = Routes::select(
-            [
-                'id',
-                'title',
-                'route_from_city_id',
-                'route_from_country_id',
-                'route_to_city_id',
-                'route_to_country_id',
-                'price'
-            ]
-        )->where( 'status', '=', 'open' )
-                        ->get();
+//        $routes = Routes::select(
+//            [
+//                'id',
+//                'title',
+//                'route_from_city_id',
+//                'route_from_country_id',
+//                'route_to_city_id',
+//                'route_to_country_id',
+//                'price'
+//            ]
+//        )->where( 'status', '=', 'open' )
+//            ->get();
 
         $result = [];
-        foreach ( $routes as $route ) {
-            $from_city    = $route->getFromCity();
-            $from_country = $route->getFromCountry();
-            $to_city      = $route->getToCity();
-            $to_country   = $route->getToCountry();
-
-            $points = [];
-            foreach ( $route->pointsName() as $point ) {
-                $points[] = $point->name;
-            }
-
-            $result[] =
-                [
-                    'id'                    => $route->id,
-                    'title'                 => $route->title,
-                    'from_city'             => $from_city[0]->name ?? '',
-                    'route_from_city_id'    => $route->route_from_city_id,
-                    'route_from_country_id' => $route->route_from_country_id,
-                    'route_to_city_id'      => $route->route_to_city_id,
-                    'route_to_country_id'   => $route->route_to_country_id,
-                    'from_country'          => $from_country[0]->name ?? '',
-                    'to_city'               => $to_city[0]->name ?? '',
-                    'to_country'            => $to_country[0]->name ?? '',
-                    'points'                => $points,
-                ];
-        }
+//        foreach ( $routes as $route ) {
+//            $from_city    = $route->getFromCity();
+//            $from_country = $route->getFromCountry();
+//            $to_city      = $route->getToCity();
+//            $to_country   = $route->getToCountry();
+//
+//            $points = [];
+//            foreach ( $route->pointsName() as $point ) {
+//                $points[] = $point->name;
+//            }
+//
+//            $result[] =
+//                [
+//                    'id'                    => $route->id,
+//                    'title'                 => $route->title,
+//                    'from_city'             => $from_city[0]->name ?? '',
+//                    'route_from_city_id'    => $route->route_from_city_id,
+//                    'route_from_country_id' => $route->route_from_country_id,
+//                    'route_to_city_id'      => $route->route_to_city_id,
+//                    'route_to_country_id'   => $route->route_to_country_id,
+//                    'from_country'          => $from_country[0]->name ?? '',
+//                    'to_city'               => $to_city[0]->name ?? '',
+//                    'to_country'            => $to_country[0]->name ?? '',
+//                    'points'                => $points,
+//                ];
+//        }
 
 //        $partners =  Partner::query()->where('status', true)->get();
         $partners = Partner::select()
-                           ->where( 'status', '=', 'enabled' )
-                           ->get();
+            ->where( 'status', '=', 'enabled' )
+            ->get();
 
         foreach ($partners as $partner){
             $partner->image = $this->getImageBySize('274x118', $partner->image);
